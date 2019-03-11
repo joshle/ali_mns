@@ -3,6 +3,7 @@ package ali_mns
 import (
 	"encoding/base64"
 	"encoding/xml"
+	"strings"
 
 	"github.com/gogap/errors"
 )
@@ -124,8 +125,14 @@ func (p *Base64Bytes) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err 
 	}
 
 	if buf, e := base64.StdEncoding.DecodeString(content); e != nil {
-		err = ERR_DECODE_BODY_FAILED.New(errors.Params{"err": e, "body": content})
-		return
+		// 考虑没有 base64 编码的情况
+		if strings.HasPrefix(content, "{") {
+			*p = Base64Bytes([]byte(content))
+
+		} else {
+			err = ERR_DECODE_BODY_FAILED.New(errors.Params{"err": e, "body": content})
+			return
+		}
 	} else {
 		*p = Base64Bytes(buf)
 	}
